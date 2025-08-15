@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Clock</title>
+    <style>
+        :root {
+            --font-size: 25.2px;
+            --gap: 56px;
+            --clock-size: 140px;
+            --hand-width: 2.8px;
+            --switch-size: 84px;
+            --switch-height: 42px;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: var(--font-size);
+            line-height: 1.5;
+            transition: background 0.5s, color 0.5s;
+        }
+
+        pre {
+            margin: 0;
+            white-space: pre-wrap;
+        }
+
+        .container {
+            display: flex;
+            align-items: center;
+            gap: var(--gap);
+        }
+
+        .code { color: #569cd6; }
+        .number { color: #dcdcaa; }
+        .string { color: #ce9178; }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .animated-background-dark {
+            background: linear-gradient(135deg, #2c3e50, #34495e, #1e1e1e);
+            /* background-size: 200% 200%;
+            animation: gradientShift 10s ease infinite; */
+        }
+
+        .analog-clock {
+            width: var(--clock-size);
+            height: var(--clock-size);
+            border: var(--hand-width) solid;
+            border-radius: 50%;
+            position: relative;
+            box-shadow: 0 0 20px rgba(206, 145, 120, 0.8);
+            transition: box-shadow 0.5s;
+        }
+
+        .hand {
+            position: absolute;
+            background: currentColor;
+            transform-origin: bottom center;
+        }
+
+        .hour-hand { width: 5.6px; height: 42px; top: 28px; left: 67.2px; }
+        .minute-hand { width: 4.2px; height: 56px; top: 14px; left: 67.9px; }
+        .second-hand { width: 2.8px; height: 63px; top: 7px; left: 68.6px; background: #ce9178; }
+
+        .center-dot {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #fff;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+            transition: background 0.5s;
+        }
+    </style>
+</head>
+<body class="animated-background-dark">
+    <div class="container">
+        <pre id="code"></pre>
+        <div class="analog-clock">
+            <div class="hand hour-hand"></div>
+            <div class="hand minute-hand"></div>
+            <div class="hand second-hand"></div>
+            <div class="center-dot"></div>
+        </div>
+    </div>
+
+    <script>
+        function updateTime() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const dayOfWeek = now.toLocaleString('en', { weekday: 'long' });
+
+            const startOfDay = new Date(now);
+            startOfDay.setHours(0, 0, 0, 0);
+            const progress = ((now - startOfDay) / 86400000) * 100;
+
+            const isDarkTheme = document.body.classList.contains('animated-background-dark');
+            const numberColor = isDarkTheme ? '#dcdcaa' : '#1e3a8a';
+
+            const codeString = `
+<span class="code">struct</span> <span style="color:#ffffff">CurrentTime</span> {
+    <span class="code">int</span> <span style="color:#ffffff">year</span> = <span class="number" style="color: ${numberColor}">${year}</span>;
+    <span class="code">int</span> <span style="color:#ffffff">month</span> = <span class="number" style="color: ${numberColor}">${month}</span>;
+    <span class="code">int</span> <span style="color:#ffffff">day</span> = <span class="number" style="color: ${numberColor}">${day}</span>;
+    <span class="code">std::string</span> <span style="color:#ffffff">day_of_week</span> = <span class="string">"${dayOfWeek}"</span>;
+    <span class="code">int</span> <span style="color:#ffffff">hour</span> = <span class="number" style="color: ${numberColor}">${hours}</span>;
+    <span class="code">int</span> <span style="color:#ffffff">minute</span> = <span class="number" style="color: ${numberColor}">${minutes}</span>;
+    <span class="code">int</span> <span style="color:#ffffff">second</span> = <span class="number" style="color: ${numberColor}">${seconds}</span>;
+    <span class="code">double</span> <span style="color:#ffffff">day_progress</span> = <span class="number" style="color: ${numberColor}">${(progress / 100).toFixed(4)}</span>;
+};
+            `;
+
+            document.getElementById('code').innerHTML = codeString;
+
+            const hourHand = document.querySelector('.hour-hand');
+            const minuteHand = document.querySelector('.minute-hand');
+            const secondHand = document.querySelector('.second-hand');
+
+            const hourDeg = (now.getHours() % 12) * 30 + (now.getMinutes() * 0.5);
+            const minuteDeg = now.getMinutes() * 6 + (now.getSeconds() * 0.1);
+            const secondDeg = now.getSeconds() * 6;
+
+            hourHand.style.transform = `rotate(${hourDeg}deg)`;
+            minuteHand.style.transform = `rotate(${minuteDeg}deg)`;
+            secondHand.style.transform = `rotate(${secondDeg}deg)`;
+        }
+
+        setInterval(updateTime, 1000);
+        updateTime();
+    </script>
+</body>
+</html>
